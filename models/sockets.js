@@ -1,4 +1,4 @@
-const TicketList = require("./ticket-list");
+const Marcadores = require("./marcadores");
 
 
 class Sockets {
@@ -7,8 +7,8 @@ class Sockets {
 
         this.io = io;
 
-        // Crear la instancia de nuestro ticketList
-        this.ticketList = new TicketList();
+        // Crear la instancia de nuestros Marcadores
+        this.marcadores = new Marcadores();
 
         this.socketEvents();
     }
@@ -19,16 +19,19 @@ class Sockets {
 
             console.log('Cliente conectado', socket.id);
 
-            socket.on('solicitar-ticket', (_, callBack) => {
-                const newTicket = this.ticketList.createTicket();
-                callBack(newTicket);
+            // Marcadores activos
+            socket.emit('marcadores-activos', this.marcadores.activos);
+
+            // Marcador nuevo
+            socket.on('marcador-nuevo', (marcador) => {
+                this.marcadores.agregarMarcador(marcador);
+                socket.broadcast.emit('marcador-nuevo', marcador);
             });
 
-            socket.on('siguiente-ticket-trabajar', ({ attended, desktop }, callBack) => {
-                const yourTicket = this.ticketList.attendTicket(attended, desktop);
-                callBack(yourTicket);
-
-                this.io.emit('ticket-asignado', this.ticketList.last13);
+            // Marcador actualizado
+            socket.on('marcador-actualizado', (marcador) => {
+                this.marcadores.actualizarMarcador(marcador);
+                socket.broadcast.emit('marcador-actualizado', marcador);
             });
 
 
